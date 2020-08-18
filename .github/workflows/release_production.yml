@@ -1,0 +1,83 @@
+name: Release - Production
+on:
+  push:
+    branches:
+      - master
+env:
+  DEPLOY_ENABLED: ${{ secrets.DEPLOY_ENABLED }}
+  S3_BUCKET: platform.vas.com
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+          registry-url: 'https://npm.pkg.github.com'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
+
+      - uses: actions/cache@v1
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Deps
+        run: yarn install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
+
+      - name: Build
+        if: toJson(env.DEPLOY_ENABLED) == true
+        run: yarn run react-scripts --max_old_space_size=4096 build
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
+          REACT_APP_API_HOST: https://platform-api.vas.com/api
+          NODE_ENV: production
+          REACT_APP_ENV: production
+          REACT_APP_ENABLE_DEV_TOOLS: false
+          REACT_APP_GOLDBERG_INTEGRATION_ID: 4
+          REACT_APP_MEDICINES_MS_URL: https://integrations.vas.com/medicine/
+          REACT_APP_AGGREGATORS_MS_URL: https://integrations.vas.com/aggregators/
+
+      - name: Upload Sourcemaps to Raygun
+        if: toJson(env.DEPLOY_ENABLED) == true
+        run: node .bin/uploadRaygun.js
+        env:
+          RAYGUN_TOKEN: ${{ secrets.RAYGUN_TOKEN }}
+          RAYGUN_KEY: ${{ secrets.RAYGUN_KEY }}
+          APP_ENV: production
+          GIT_SHA: ${{ github.sha }}
+
+      - name: Deploy
+        if: toJson(env.DEPLOY_ENABLED) == true
+        run: |
+          aws s3 sync build s3://${{ env.S3_BUCKET }} --delete --region us-east-1 --exclude "*.map" --acl public-read --cache-control 'max-age=2419200, must-revalidate, public'
+          aws s3 cp s3://${{ env.S3_BUCKET }}/apple-icon-152x152.png s3://${{ env.S3_BUCKET }}/apple-icon-152x152.png --region us-east-1 --metadata-directive REPLACE --cache-control 'no-cache, no-store, must-revalidate'
+          aws s3 cp s3://${{ env.S3_BUCKET }}/asset-manifest.json s3://${{ env.S3_BUCKET }}/asset-manifest.json --region us-east-1 --metadata-directive REPLACE --cache-control 'no-cache, no-store, must-revalidate'
+          aws s3 cp s3://${{ env.S3_BUCKET }}/favicon.ico s3://${{ env.S3_BUCKET }}/favicon.ico --region us-east-1 --metadata-directive REPLACE --cache-control 'no-cache, no-store, must-revalidate'
+          aws s3 cp s3://${{ env.S3_BUCKET }}/index.html s3://${{ env.S3_BUCKET }}/index.html --region us-east-1 --metadata-directive REPLACE --cache-control 'no-cache, no-store, must-revalidate'
+          aws s3 cp s3://${{ env.S3_BUCKET }}/manifest.json s3://${{ env.S3_BUCKET }}/manifest.json --region us-east-1 --metadata-directive REPLACE --cache-control 'no-cache, no-store, must-revalidate'
+          aws s3 cp s3://${{ env.S3_BUCKET }}/service-worker.js s3://${{ env.S3_BUCKET }}/service-worker.js --region us-east-1 --metadata-directive REPLACE --cache-control 'no-cache, no-store, must-revalidate'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.PROD_AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.PROD_AWS_SECRET_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
+
+      - name: Slack notification
+        if: toJson(env.DEPLOY_ENABLED) == true
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: Ilshidur/action-slack@efb86f4
+        with:
+          args: 'Production Deploy Status: ${{ job.status }}' # Optional

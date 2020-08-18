@@ -1,0 +1,5 @@
+name: 'Download Translations'
+description: 'Downloads app translations from OneSky'
+runs:
+  using: 'node12'
+  main: './index.js'

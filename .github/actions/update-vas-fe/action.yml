@@ -1,0 +1,7 @@
+name: 'Update @vas-dev/vas-ui version'
+description: 'Updates the library version in package.json and creates a PR'
+inputs:
+  actor: 'actor'
+runs:
+  using: 'node12'
+  main: './index.js'

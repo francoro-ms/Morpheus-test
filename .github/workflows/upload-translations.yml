@@ -1,0 +1,61 @@
+name: Translation Uploader
+on:
+  schedule:
+    - cron: '0 10 * * 1'
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+          registry-url: 'https://npm.pkg.github.com'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v1
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install Deps
+        run: yarn install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
+      - name: Upload translation
+        uses: gndelia/onesky-uploader-action@v0.0.1
+        with:
+          projectId: 149489
+          publicKey: ${{ secrets.ONESKY_PUBLIC_KEY }}
+          privateKey: ${{ secrets.ONESKY_PRIVATE_KEY }}
+          filepath: ./src/resources/locales
+          filename: translations.en.json
+          locale: en-US
+          fileformat: HIERARCHICAL_JSON
+          isKeepingAllStrings: false
+      - name: Slack notification failure
+        if: ${{ failure() }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: fe-ui
+        uses: Ilshidur/action-slack@efb86f4
+        with:
+          job-status: ${{ job.status }}
+          args: 'Upload Translation Status: ${{ job.status }}'
+      - name: Slack notification success
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: fe-ui
+        uses: Ilshidur/action-slack@efb86f4
+        with:
+          job-status: ${{ job.status }}
+          args: 'Upload Translation Status: ${{ job.status }}'

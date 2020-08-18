@@ -1,0 +1,5 @@
+name: 'Update Status Check'
+description: 'Updates the status check'
+runs:
+  using: 'node12'
+  main: './index.js'

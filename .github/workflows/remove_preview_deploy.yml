@@ -1,0 +1,16 @@
+name: Remove Preview Deploy
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Preview Site
+        run: |
+          aws s3 rm --recursive s3://${S3_PROJECT_BUCKET}/platform-${{ github.event.pull_request.number }}
+        env:
+          S3_PROJECT_BUCKET: ${{ secrets.S3_PROJECT_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
