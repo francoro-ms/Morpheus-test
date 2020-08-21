@@ -10,8 +10,8 @@ const owner = 'vas-dev'
 const repo = 'Morpheus-FE'
 const libraryRepo = 'vas-fe'
 
-const userName = JSON.parse(core.getInput('actor'));
-console.log(11111, userName.actor)
+const userName = core.getInput('actor')
+console.log(11111, userName)
 const updatePackageJson = async () => {
   console.log(path.resolve())
   await new Promise((resolve, reject) => {
