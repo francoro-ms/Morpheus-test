@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/francoro-ms/Morpheus-test#readme",
   "dependencies": {
-    "@octokit/rest": "^18.0.3"
+    "@octokit/rest": "^18.0.3",
+    "octokit-create-pull-request": "^1.5.0"
   }
 }
