@@ -39,4 +39,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.VAS_BUILD_TOKEN }}
         with:
-          actor: ${{ github.event.client_payload }}
+          actor: ${{ github.event.client_payload.actor }}
