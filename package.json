@@ -1,0 +1,22 @@
+{
+  "name": "morpheustest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/francoro-ms/Morpheus-test.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/francoro-ms/Morpheus-test/issues"
+  },
+  "homepage": "https://github.com/francoro-ms/Morpheus-test#readme",
+  "dependencies": {
+    "@octokit/rest": "^18.0.3"
+  }
+}
