@@ -11,7 +11,7 @@ const repo = 'Morpheus-FE'
 const libraryRepo = 'vas-fe'
 
 const userName = core.getInput('actor')
-console.log(11111, userName)
+console.log(11111, JSON.parse(userName))
 const updatePackageJson = async () => {
   console.log(path.resolve())
   await new Promise((resolve, reject) => {
