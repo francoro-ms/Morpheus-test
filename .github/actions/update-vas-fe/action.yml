@@ -4,7 +4,6 @@ inputs:
   actor:
     description: 'username actor'
     required: true
-    default: 'Actor test'
 runs:
   using: 'node12'
   main: './index.js'
